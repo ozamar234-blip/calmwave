@@ -43,17 +43,17 @@ export function HistoryDashboard() {
   };
 
   return (
-    <div className="min-h-dvh pb-24 px-6 pt-12 bg-bg-primary">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold mb-6">היסטוריה</h1>
+    <div className="screen safe-area-top pb-28 px-6 pt-10 bg-bg-primary">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-lg mx-auto w-full">
+        <h1 className="text-2xl font-bold mb-5">היסטוריה</h1>
 
         {/* Range filter */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-5">
           {(Object.keys(rangeLabels) as TimeRange[]).map((r) => (
             <button
               key={r}
               onClick={() => setRange(r)}
-              className={`px-4 py-2 rounded-xl text-sm transition-colors ${
+              className={`px-4 py-2 rounded-xl text-sm transition-colors appearance-none border-none cursor-pointer ${
                 range === r ? 'bg-accent-calm text-white' : 'glass text-text-secondary'
               }`}
             >
@@ -64,8 +64,8 @@ export function HistoryDashboard() {
 
         {/* Chart */}
         {chartData.length > 0 ? (
-          <div className="glass-card mb-6" style={{ height: 200 }}>
-            <h3 className="text-sm text-text-secondary mb-2">ממוצע לחץ לפי יום</h3>
+          <div className="glass-card mb-5" style={{ height: 200, direction: 'ltr' }}>
+            <h3 className="text-sm text-text-secondary mb-2" style={{ direction: 'rtl' }}>ממוצע לחץ לפי יום</h3>
             <ResponsiveContainer width="100%" height="85%">
               <AreaChart data={chartData}>
                 <defs>
@@ -74,29 +74,35 @@ export function HistoryDashboard() {
                     <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="day" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <XAxis dataKey="day" tick={{ fill: '#94a3b8', fontSize: 11 }} />
                 <YAxis domain={[0, 10]} hide />
                 <Tooltip
-                  contentStyle={{ background: '#1a1333', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#f1f5f9' }}
+                  contentStyle={{
+                    background: '#1a1333',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 8,
+                    color: '#f1f5f9',
+                    direction: 'rtl',
+                  }}
                 />
                 <Area type="monotone" dataKey="avg" stroke="#6366f1" fill="url(#histGrad)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="glass-card text-center text-text-secondary py-12 mb-6">
+          <div className="glass-card text-center text-text-secondary py-10 mb-5">
             {loading ? 'טוען...' : 'אין עדיין נתונים. התחל את ההרגעה הראשונה שלך!'}
           </div>
         )}
 
         {/* Session list */}
         <h3 className="text-lg font-semibold mb-3">סשנים אחרונים</h3>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {filteredSessions.length === 0 && !loading && (
             <p className="text-text-secondary text-sm">אין סשנים בטווח הנבחר</p>
           )}
           {filteredSessions.map((s) => (
-            <div key={s.id} className="glass-card flex justify-between items-center">
+            <div key={s.id} className="glass-card flex justify-between items-center py-3">
               <div>
                 <div className="text-sm text-text-secondary">
                   {new Date(s.startTime).toLocaleDateString('he-IL', {
@@ -106,13 +112,13 @@ export function HistoryDashboard() {
                     minute: '2-digit',
                   })}
                 </div>
-                <div className="text-sm mt-1">
+                <div className="text-sm mt-0.5">
                   {Math.floor(s.duration / 60)} דקות
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-accent-stress font-bold">{s.initialScore}</span>
-                <span className="text-text-secondary">→</span>
+                <span className="text-text-secondary">←</span>
                 <span className="text-accent-success font-bold">{s.finalScore}</span>
               </div>
             </div>

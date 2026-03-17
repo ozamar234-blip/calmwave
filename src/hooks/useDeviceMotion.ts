@@ -23,29 +23,28 @@ export function useDeviceMotion(): UseDeviceMotionReturn {
   const listenerRef = useRef<((e: DeviceMotionEvent) => void) | null>(null);
 
   const handleMotion = useCallback((event: DeviceMotionEvent) => {
-    const acc = event.acceleration || event.accelerationIncludingGravity;
+    // Prefer acceleration without gravity; fall back to accelerationIncludingGravity on Safari
+    const acc = event.acceleration ?? event.accelerationIncludingGravity;
     const rot = event.rotationRate;
 
     if (acc) {
-      const sample = {
-        x: acc.x ?? 0,
-        y: acc.y ?? 0,
-        z: acc.z ?? 0,
-      };
+      // On some Safari versions, values can be null individually
+      const x = acc.x != null ? acc.x : 0;
+      const y = acc.y != null ? acc.y : 0;
+      const z = acc.z != null ? acc.z : 0;
 
-      samplesRef.current.push(sample);
+      samplesRef.current.push({ x, y, z });
       if (samplesRef.current.length > BUFFER_SIZE) {
         samplesRef.current = samplesRef.current.slice(-BUFFER_SIZE);
       }
     }
 
     if (rot) {
-      const rotation = {
-        alpha: rot.alpha ?? 0,
-        beta: rot.beta ?? 0,
-        gamma: rot.gamma ?? 0,
-      };
-      rotationRef.current.push(rotation);
+      const alpha = rot.alpha != null ? rot.alpha : 0;
+      const beta = rot.beta != null ? rot.beta : 0;
+      const gamma = rot.gamma != null ? rot.gamma : 0;
+
+      rotationRef.current.push({ alpha, beta, gamma });
       if (rotationRef.current.length > BUFFER_SIZE) {
         rotationRef.current = rotationRef.current.slice(-BUFFER_SIZE);
       }
@@ -60,6 +59,10 @@ export function useDeviceMotion(): UseDeviceMotionReturn {
 
   const startListening = useCallback(() => {
     if (permission !== 'granted') return;
+    // Prevent duplicate listeners
+    if (listenerRef.current) {
+      window.removeEventListener('devicemotion', listenerRef.current);
+    }
     listenerRef.current = handleMotion;
     window.addEventListener('devicemotion', handleMotion, { passive: true });
     setIsListening(true);
@@ -86,10 +89,10 @@ export function useDeviceMotion(): UseDeviceMotionReturn {
     };
   }, []);
 
-  // Periodic state sync for consumers
+  // Periodic state sync for consumers — less frequent to save battery
   useEffect(() => {
     if (!isListening) return;
-    const id = setInterval(() => forceUpdate((n) => n + 1), 200);
+    const id = setInterval(() => forceUpdate((n) => n + 1), 300);
     return () => clearInterval(id);
   }, [isListening]);
 

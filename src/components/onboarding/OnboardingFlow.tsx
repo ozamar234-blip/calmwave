@@ -39,50 +39,52 @@ export function OnboardingFlow() {
   const slide = SLIDES[step];
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-6 bg-gradient-to-b from-bg-primary via-bg-secondary to-bg-primary">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={step}
-          initial={{ opacity: 0, x: -40 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 40 }}
-          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center text-center gap-6 max-w-sm"
-        >
+    <div className="screen items-center justify-center px-6 bg-gradient-to-b from-bg-primary via-bg-secondary to-bg-primary safe-area-top safe-area-bottom">
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm mx-auto">
+        <AnimatePresence mode="wait">
           <motion.div
-            className="text-8xl"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            key={step}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
+            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+            className="flex flex-col items-center text-center gap-5"
           >
-            {slide.visual}
+            <motion.div
+              className="text-7xl leading-none"
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              {slide.visual}
+            </motion.div>
+
+            <h1 className="text-2xl font-bold text-text-primary mt-4">{slide.title}</h1>
+            <p className="text-text-secondary leading-relaxed text-base px-2">{slide.description}</p>
           </motion.div>
+        </AnimatePresence>
 
-          <h1 className="text-2xl font-bold text-text-primary">{slide.title}</h1>
-          <p className="text-text-secondary leading-relaxed">{slide.description}</p>
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Dots */}
-      <div className="flex gap-2 mt-10">
-        {SLIDES.map((_, i) => (
-          <div
-            key={i}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              i === step ? 'bg-accent-calm w-6' : 'bg-white/20'
-            }`}
-          />
-        ))}
+        {/* Dots */}
+        <div className="flex gap-2 mt-8">
+          {SLIDES.map((_, i) => (
+            <div
+              key={i}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === step ? 'bg-accent-calm w-6' : 'bg-white/20 w-2'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="mt-8 w-full max-w-sm">
+      <div className="w-full max-w-sm mx-auto pb-6 px-6 flex flex-col items-center gap-4">
         <Button onClick={handleNext} size="lg" className="w-full" aria-label={step < SLIDES.length - 1 ? 'הבא' : 'בוא נתחיל'}>
           {step < SLIDES.length - 1 ? 'הבא' : 'בוא נתחיל'}
         </Button>
-      </div>
 
-      <p className="text-xs text-text-secondary mt-8 max-w-xs text-center leading-relaxed">
-        CalmWave אינה מכשיר רפואי ואינה מחליפה ייעוץ רפואי מקצועי. האפליקציה מיועדת לשימוש ככלי עזר להרפיה בלבד.
-      </p>
+        <p className="text-[11px] text-text-secondary text-center leading-relaxed px-4">
+          CalmWave אינה מכשיר רפואי ואינה מחליפה ייעוץ רפואי מקצועי. האפליקציה מיועדת לשימוש ככלי עזר להרפיה בלבד.
+        </p>
+      </div>
     </div>
   );
 }

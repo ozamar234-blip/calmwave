@@ -26,21 +26,21 @@ export function SessionSummary() {
   const secs = duration % 60;
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-b from-bg-primary to-bg-secondary">
+    <div className="screen items-center justify-center px-6 py-10 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm flex flex-col items-center gap-8"
+        className="w-full max-w-sm flex flex-col items-center gap-6"
       >
         <h1 className="text-2xl font-bold">סיכום הרגעה</h1>
 
         {/* Score comparison */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-8">
           <div className="text-center">
             <div className="text-5xl font-bold text-accent-stress">{initialScore}</div>
             <div className="text-sm text-text-secondary mt-1">לפני</div>
           </div>
-          <div className="text-3xl text-text-secondary">→</div>
+          <div className="text-3xl text-text-secondary">←</div>
           <div className="text-center">
             <div className="text-5xl font-bold text-accent-success">{finalScore}</div>
             <div className="text-sm text-text-secondary mt-1">אחרי</div>
@@ -49,18 +49,18 @@ export function SessionSummary() {
 
         {/* Stats */}
         <div className="glass-card w-full">
-          <div className="flex justify-between mb-4">
+          <div className="flex justify-between mb-3">
             <span className="text-text-secondary">משך</span>
             <span className="font-medium">{mins} דקות {secs > 0 ? `ו-${secs} שניות` : ''}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-text-secondary">שיפור</span>
-            <span className="font-medium text-accent-success">{improvement}%</span>
+            <span className="font-medium text-accent-success">{improvement > 0 ? `${improvement}%` : '—'}</span>
           </div>
         </div>
 
         {/* Feedback */}
-        <p className="text-center text-lg">
+        <p className="text-center text-lg px-4">
           {improvement > 50
             ? `הצלחת להוריד ${improvement}% מהלחץ! 🎉`
             : improvement > 20
@@ -70,7 +70,7 @@ export function SessionSummary() {
 
         {/* Chart */}
         {scores.length > 1 && (
-          <div className="glass-card w-full" style={{ height: 160 }}>
+          <div className="glass-card w-full" style={{ height: 140, direction: 'ltr' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={scores}>
                 <defs>
@@ -94,11 +94,9 @@ export function SessionSummary() {
         )}
 
         {/* Actions */}
-        <div className="flex flex-col gap-3 w-full">
-          <Button onClick={() => navigate('/')} size="lg" className="w-full" aria-label="חזרה לראשי">
-            חזרה לראשי
-          </Button>
-        </div>
+        <Button onClick={() => navigate('/')} size="lg" className="w-full" aria-label="חזרה לראשי">
+          חזרה לראשי
+        </Button>
       </motion.div>
     </div>
   );

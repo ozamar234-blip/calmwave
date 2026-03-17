@@ -49,12 +49,12 @@ export function CalibrationScreen() {
     : 'מצוין! המשך/י להחזיק';
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary">
+    <div className="screen items-center justify-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
       {phase === 'permission' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center flex flex-col items-center gap-6 max-w-sm">
-          <div className="text-6xl">📱</div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center flex flex-col items-center gap-5 max-w-sm px-2">
+          <div className="text-6xl leading-none">📱</div>
           <h1 className="text-2xl font-bold">גישה לחיישני הטלפון</h1>
-          <p className="text-text-secondary">
+          <p className="text-text-secondary text-base leading-relaxed">
             כדי למדוד את רמת הלחץ שלך, CalmWave צריכה גישה לחיישני התנועה של הטלפון.
           </p>
           {permission === 'denied' && (
@@ -67,29 +67,29 @@ export function CalibrationScreen() {
               חיישני תנועה אינם זמינים במכשיר זה. נסה/י להשתמש בטלפון.
             </div>
           )}
-          <Button onClick={handleRequestPermission} size="lg" aria-label="אפשר גישה לחיישנים">
+          <Button onClick={handleRequestPermission} size="lg" className="w-full max-w-xs" aria-label="אפשר גישה לחיישנים">
             אפשר גישה לחיישנים
           </Button>
         </motion.div>
       )}
 
       {phase === 'ready' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center flex flex-col items-center gap-6 max-w-sm">
-          <div className="text-6xl">✋</div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center flex flex-col items-center gap-5 max-w-sm px-2">
+          <div className="text-6xl leading-none">✋</div>
           <h1 className="text-2xl font-bold">כיול אישי</h1>
-          <p className="text-text-secondary">
+          <p className="text-text-secondary text-base leading-relaxed">
             החזק/י את הטלפון ביד בנוחות למשך 30 שניות. אנחנו נלמד את רמת הרעד הטבעית שלך.
           </p>
-          <Button onClick={handleStartCalibration} size="lg" aria-label="התחל כיול">
+          <Button onClick={handleStartCalibration} size="lg" className="w-full max-w-xs" aria-label="התחל כיול">
             התחל כיול
           </Button>
         </motion.div>
       )}
 
       {phase === 'calibrating' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center flex flex-col items-center gap-6">
-          <ProgressRing progress={progress} size={220} color="#6366f1">
-            <span className="text-4xl font-bold">{Math.round(progress * 100)}%</span>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center flex flex-col items-center gap-5">
+          <ProgressRing progress={progress} size={200} color="#6366f1">
+            <span className="text-3xl font-bold">{Math.round(progress * 100)}%</span>
           </ProgressRing>
           <h2 className="text-xl font-semibold">{hint}</h2>
           <p className="text-text-secondary text-sm">
@@ -99,13 +99,13 @@ export function CalibrationScreen() {
       )}
 
       {phase === 'done' && (
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center flex flex-col items-center gap-6 max-w-sm">
-          <div className="text-6xl">✅</div>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center flex flex-col items-center gap-5 max-w-sm px-2">
+          <div className="text-6xl leading-none">✅</div>
           <h1 className="text-2xl font-bold">הכיול הושלם!</h1>
-          <p className="text-text-secondary">
+          <p className="text-text-secondary text-base leading-relaxed">
             הבייסליין שלך נשמר. עכשיו נוכל למדוד את רמת הלחץ שלך בצורה מדויקת.
           </p>
-          <Button onClick={() => navigate('/')} size="lg" aria-label="המשך למסך הראשי">
+          <Button onClick={() => navigate('/')} size="lg" className="w-full max-w-xs" aria-label="המשך למסך הראשי">
             המשך
           </Button>
         </motion.div>

@@ -10,26 +10,35 @@ export function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide nav on relaxation/measurement/calibration screens
-  const hiddenPaths = ['/relaxation', '/measurement', '/calibration', '/onboarding'];
+  // Hide nav on full-screen flows
+  const hiddenPaths = ['/relaxation', '/measurement', '/calibration', '/onboarding', '/summary'];
   if (hiddenPaths.some((p) => location.pathname.startsWith(p))) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 glass border-t border-white/10 z-50 safe-area-bottom">
-      <div className="flex justify-around items-center py-3 px-4 max-w-lg mx-auto">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50"
+      style={{
+        background: 'rgba(15, 10, 30, 0.85)',
+        WebkitBackdropFilter: 'blur(16px)',
+        backdropFilter: 'blur(16px)',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
+      <div className="flex justify-around items-center py-2.5 px-4 max-w-lg mx-auto">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center gap-1 px-4 py-1 rounded-xl transition-colors ${
-                isActive ? 'text-accent-calm' : 'text-text-secondary hover:text-text-primary'
+              className={`flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-xl transition-colors appearance-none border-none bg-transparent cursor-pointer ${
+                isActive ? 'text-accent-calm' : 'text-text-secondary active:text-text-primary'
               }`}
               aria-label={item.label}
             >
-              <span className="text-xl">{item.icon}</span>
-              <span className="text-xs">{item.label}</span>
+              <span className="text-xl leading-none">{item.icon}</span>
+              <span className="text-[11px]">{item.label}</span>
             </button>
           );
         })}

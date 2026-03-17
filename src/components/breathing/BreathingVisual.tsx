@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useBreathingSync } from '../../hooks/useBreathingSync';
-import { BREATH_CIRCLE_MAX } from '../../utils/constants';
 
 interface BreathingVisualProps {
   currentBpm: number;
@@ -55,15 +54,16 @@ export function BreathingVisual({ currentBpm, stressScore }: BreathingVisualProp
 
   const color = getBreathColor(stressScore);
   const gradient = getGradient(stressScore);
-  const size = BREATH_CIRCLE_MAX;
+  // Responsive size — smaller on small screens
+  const size = Math.min(260, typeof window !== 'undefined' ? window.innerWidth * 0.6 : 260);
 
   return (
-    <div className="flex flex-col items-center gap-8">
+    <div className="flex flex-col items-center">
       <div
         className="relative flex items-center justify-center"
         style={{ width: size, height: size }}
       >
-        {/* Outer glow */}
+        {/* Outer glow — use WebKit filter for Safari */}
         <motion.div
           animate={controls}
           initial={{ scale: 0.6, opacity: 0.7 }}
@@ -72,8 +72,10 @@ export function BreathingVisual({ currentBpm, stressScore }: BreathingVisualProp
             width: size,
             height: size,
             background: gradient,
-            filter: `blur(40px)`,
+            WebkitFilter: 'blur(40px)',
+            filter: 'blur(40px)',
             opacity: 0.3,
+            willChange: 'transform, opacity',
           }}
         />
 
@@ -87,20 +89,25 @@ export function BreathingVisual({ currentBpm, stressScore }: BreathingVisualProp
             height: size * 0.8,
             background: gradient,
             boxShadow: `0 0 60px ${color}40`,
+            willChange: 'transform, opacity',
           }}
         />
 
-        {/* Inner circle */}
+        {/* Inner circle with text */}
         <motion.div
           animate={controls}
           initial={{ scale: 0.6, opacity: 0.7 }}
-          className="absolute rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center"
+          className="absolute rounded-full flex items-center justify-center"
           style={{
             width: size * 0.5,
             height: size * 0.5,
+            background: 'rgba(255,255,255,0.08)',
+            WebkitBackdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(8px)',
+            willChange: 'transform, opacity',
           }}
         >
-          <span className="text-white/90 text-lg font-medium select-none">
+          <span className="text-white/90 text-base font-medium select-none">
             {phase === 'inhale' ? 'שאפ/י...' : 'נשפ/י...'}
           </span>
         </motion.div>

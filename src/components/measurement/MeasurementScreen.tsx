@@ -48,7 +48,6 @@ export function MeasurementScreen() {
           const stressResult = analyze([...samples], calibration);
           setResult(stressResult);
         } else {
-          // Fallback if no calibration
           setResult({ score: 5, rms: 0, bandPower: 0, timestamp: Date.now() });
         }
         setPhase('result');
@@ -70,7 +69,7 @@ export function MeasurementScreen() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary">
+    <div className="screen items-center justify-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
       <AnimatePresence mode="wait">
         {phase === 'prep' && (
           <motion.div
@@ -78,14 +77,14 @@ export function MeasurementScreen() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-center flex flex-col items-center gap-6 max-w-sm"
+            className="text-center flex flex-col items-center gap-5 max-w-sm px-2"
           >
-            <div className="text-6xl">🤲</div>
+            <div className="text-6xl leading-none">🤲</div>
             <h1 className="text-2xl font-bold">מדידת לחץ</h1>
-            <p className="text-text-secondary">
+            <p className="text-text-secondary text-base leading-relaxed">
               החזק/י את הטלפון ביד למשך {MEASUREMENT_DURATION} שניות. אנחנו נמדוד את רמת הרעד.
             </p>
-            <Button onClick={startMeasurement} size="lg" aria-label="התחל מדידה">
+            <Button onClick={startMeasurement} size="lg" className="w-full max-w-xs" aria-label="התחל מדידה">
               התחל מדידה
             </Button>
           </motion.div>
@@ -97,10 +96,10 @@ export function MeasurementScreen() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-center flex flex-col items-center gap-6"
+            className="text-center flex flex-col items-center gap-5"
           >
-            <ProgressRing progress={progress} size={220} color="#6366f1">
-              <span className="text-4xl font-bold">{Math.ceil(MEASUREMENT_DURATION * (1 - progress))}</span>
+            <ProgressRing progress={progress} size={200} color="#6366f1">
+              <span className="text-3xl font-bold">{Math.ceil(MEASUREMENT_DURATION * (1 - progress))}</span>
             </ProgressRing>
             <h2 className="text-xl font-semibold">מודד/ת...</h2>
             <p className="text-text-secondary text-sm">החזק/י את הטלפון ביד בצורה טבעית</p>
@@ -110,15 +109,15 @@ export function MeasurementScreen() {
         {phase === 'result' && result && (
           <motion.div
             key="result"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="text-center flex flex-col items-center gap-6 max-w-sm"
+            className="text-center flex flex-col items-center gap-5 max-w-sm w-full px-2"
           >
             <ScoreDisplay score={result.score} />
             <p className="text-lg text-text-secondary">{getFeedback(result.score)}</p>
 
-            <div className="flex flex-col gap-3 w-full mt-4">
+            <div className="flex flex-col gap-3 w-full mt-2">
               <Button
                 onClick={() => navigate('/relaxation', { state: { stressScore: result.score } })}
                 size="lg"
@@ -131,6 +130,7 @@ export function MeasurementScreen() {
                 onClick={() => navigate('/')}
                 variant="ghost"
                 size="md"
+                className="w-full"
                 aria-label="חזרה לראשי"
               >
                 חזרה לראשי

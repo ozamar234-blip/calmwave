@@ -31,23 +31,28 @@ export function SettingsScreen() {
   };
 
   return (
-    <div className="min-h-dvh pb-24 px-6 pt-12 bg-bg-primary">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold mb-8">הגדרות</h1>
+    <div className="screen safe-area-top pb-28 px-6 pt-10 bg-bg-primary">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-lg mx-auto w-full">
+        <h1 className="text-2xl font-bold mb-6">הגדרות</h1>
 
         {/* Music style */}
-        <section className="mb-8">
+        <section className="mb-7">
           <h2 className="text-lg font-semibold mb-3">סגנון מוזיקלי</h2>
           <div className="flex flex-col gap-2">
             {MUSIC_STYLES.map((style) => (
               <button
                 key={style.value}
                 onClick={() => setPreferredMusicStyle(style.value)}
-                className={`glass-card text-right transition-all ${
+                className={`glass-card text-right transition-all appearance-none border-none cursor-pointer text-text-primary ${
                   preferredMusicStyle === style.value
-                    ? 'border-accent-calm border-2'
+                    ? 'border-accent-calm !border-2 !border-solid'
                     : ''
                 }`}
+                style={
+                  preferredMusicStyle === style.value
+                    ? { borderColor: '#6366f1', borderWidth: 2, borderStyle: 'solid' }
+                    : {}
+                }
               >
                 {style.label}
               </button>
@@ -56,7 +61,7 @@ export function SettingsScreen() {
         </section>
 
         {/* Calibration */}
-        <section className="mb-8">
+        <section className="mb-7">
           <h2 className="text-lg font-semibold mb-3">כיול</h2>
           <Button onClick={handleRecalibrate} variant="secondary" size="md" aria-label="כיול מחדש">
             כיול מחדש
@@ -64,7 +69,7 @@ export function SettingsScreen() {
         </section>
 
         {/* Clear data */}
-        <section className="mb-8">
+        <section className="mb-7">
           <h2 className="text-lg font-semibold mb-3">ניקוי נתונים</h2>
           {!showClearConfirm ? (
             <Button onClick={() => setShowClearConfirm(true)} variant="ghost" size="md" className="text-accent-stress" aria-label="מחק את כל הנתונים">
