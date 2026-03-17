@@ -55,7 +55,7 @@ export function CalibrationScreen() {
   );
 
   return (
-    <div className="screen items-center justify-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
+    <div className="screen-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
       {phase === 'permission' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center flex flex-col items-center gap-5 max-w-sm px-2">
           <div className="text-6xl leading-none">📱</div>

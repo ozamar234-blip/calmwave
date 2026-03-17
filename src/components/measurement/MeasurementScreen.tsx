@@ -113,7 +113,7 @@ export function MeasurementScreen() {
   );
 
   return (
-    <div className="screen items-center justify-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
+    <div className="screen-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
       <AnimatePresence mode="wait">
         {/* ─── PREP PHASE ─── */}
         {phase === 'prep' && (

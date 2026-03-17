@@ -39,7 +39,7 @@ export function OnboardingFlow() {
   const slide = SLIDES[step];
 
   return (
-    <div className="screen items-center justify-center px-6 bg-gradient-to-b from-bg-primary via-bg-secondary to-bg-primary safe-area-top safe-area-bottom">
+    <div className="screen-center px-6 bg-gradient-to-b from-bg-primary via-bg-secondary to-bg-primary safe-area-top safe-area-bottom">
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm mx-auto">
         <AnimatePresence mode="wait">
           <motion.div

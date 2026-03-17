@@ -118,7 +118,7 @@ export function RelaxationScreen() {
 
   if (!started) {
     return (
-      <div className="screen items-center justify-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
+      <div className="screen-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -159,7 +159,7 @@ export function RelaxationScreen() {
 
   return (
     <div
-      className="screen items-center justify-between py-8 px-5 safe-area-top safe-area-bottom"
+      className="screen items-center justify-between py-8 px-5 safe-area-top safe-area-bottom overflow-hidden"
       style={{ ...getBgStyle(), transition: 'background 5s ease' }}
     >
       {/* Top: Enhanced stats bar */}

@@ -137,3 +137,25 @@ body {
   flex-direction: column;
   position: relative;
 }
+
+/* Centered screen — for fixed-content screens like measurement prep, calibration */
+.screen-center {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Scrollable screen — for content that may overflow */
+.screen-scroll {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
