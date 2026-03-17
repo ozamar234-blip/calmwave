@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useToneEngine } from '../../hooks/useToneEngine';
@@ -98,6 +98,24 @@ export function RelaxationScreen() {
     return { background: 'linear-gradient(to bottom, #0f0a1e, #0a0f1e, #0f0a1e)' };
   };
 
+  // Score bar color
+  const getScoreColor = (score: number): string => {
+    if (score >= 7) return '#ef4444';
+    if (score >= 4) return '#f59e0b';
+    return '#10b981';
+  };
+
+  const scoreColor = getScoreColor(currentScore);
+
+  // BPM progress towards target
+  const bpmProgress = useMemo(() => {
+    const startBpm = stressScore >= 7 ? 115 : stressScore >= 4 ? 90 : 75;
+    const targetBpm = 65;
+    const range = startBpm - targetBpm;
+    if (range <= 0) return 1;
+    return Math.min(1, Math.max(0, (startBpm - currentBpm) / range));
+  }, [currentBpm, stressScore]);
+
   if (!started) {
     return (
       <div className="screen items-center justify-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
@@ -110,9 +128,27 @@ export function RelaxationScreen() {
           <p className="text-text-secondary text-base leading-relaxed">
             הנח/י את הטלפון על משטח יציב. המוזיקה תתחיל ותוביל אותך להירגע.
           </p>
-          <p className="text-accent-calm text-sm">
-            ציון הלחץ שלך: {stressScore}/10
-          </p>
+
+          {/* Score preview with visual bar */}
+          <div className="glass-card w-full">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-text-secondary">ציון הלחץ שלך</span>
+              <span className="text-2xl font-bold" style={{ color: getScoreColor(stressScore) }}>
+                {stressScore}/10
+              </span>
+            </div>
+            <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${stressScore * 10}%`,
+                  background: getScoreColor(stressScore),
+                  boxShadow: `0 0 8px ${getScoreColor(stressScore)}60`,
+                }}
+              />
+            </div>
+          </div>
+
           <Button onClick={handleStart} size="round" className="pulse-glow mt-2" aria-label="התחל הרגעה">
             <span className="text-3xl">▶</span>
           </Button>
@@ -123,22 +159,48 @@ export function RelaxationScreen() {
 
   return (
     <div
-      className="screen items-center justify-between py-10 px-5 safe-area-top safe-area-bottom"
+      className="screen items-center justify-between py-8 px-5 safe-area-top safe-area-bottom"
       style={{ ...getBgStyle(), transition: 'background 5s ease' }}
     >
-      {/* Top: BPM + Timer + Stress */}
-      <div className="flex justify-between w-full max-w-sm gap-2">
-        <div className="glass px-3 py-2 text-center flex-1">
-          <div className="text-[10px] text-text-secondary leading-none">BPM</div>
-          <div className="text-base font-bold text-accent-calm mt-0.5">{Math.round(currentBpm)}</div>
+      {/* Top: Enhanced stats bar */}
+      <div className="flex flex-col w-full max-w-sm gap-2">
+        <div className="flex justify-between w-full gap-2">
+          <div className="glass px-3 py-2 text-center flex-1">
+            <div className="text-[10px] text-text-secondary leading-none">BPM</div>
+            <div className="text-base font-bold text-accent-calm mt-0.5">{Math.round(currentBpm)}</div>
+          </div>
+          <div className="glass px-3 py-2 text-center flex-1">
+            <div className="text-[10px] text-text-secondary leading-none">זמן</div>
+            <Timer seconds={elapsed} className="text-base font-bold mt-0.5 block" />
+          </div>
+          <div className="glass px-3 py-2 text-center flex-1">
+            <div className="text-[10px] text-text-secondary leading-none">לחץ</div>
+            <div className="text-base font-bold mt-0.5" style={{ color: scoreColor }}>
+              {currentScore}/10
+            </div>
+          </div>
         </div>
-        <div className="glass px-3 py-2 text-center flex-1">
-          <div className="text-[10px] text-text-secondary leading-none">זמן</div>
-          <Timer seconds={elapsed} className="text-base font-bold mt-0.5 block" />
-        </div>
-        <div className="glass px-3 py-2 text-center flex-1">
-          <div className="text-[10px] text-text-secondary leading-none">לחץ</div>
-          <div className="text-base font-bold mt-0.5">{currentScore}/10</div>
+
+        {/* Stress reduction progress bar */}
+        <div className="w-full">
+          <div className="flex justify-between text-[9px] text-text-secondary mb-0.5 px-1">
+            <span>לחץ</span>
+            <span>התקדמות הרגעה</span>
+            <span>רגוע</span>
+          </div>
+          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <motion.div
+              className="h-full rounded-full"
+              animate={{
+                width: `${Math.max(5, (1 - currentScore / 10) * 100)}%`,
+              }}
+              transition={{ duration: 1.5 }}
+              style={{
+                background: `linear-gradient(90deg, ${scoreColor}, #10b981)`,
+                boxShadow: `0 0 6px #10b98160`,
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -147,23 +209,38 @@ export function RelaxationScreen() {
         <BreathingVisual currentBpm={currentBpm} stressScore={currentScore} />
       </div>
 
-      {/* "You're relaxed" message */}
-      <div className="min-h-[40px] flex items-center">
-        {showEndMessage && (
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-accent-success text-base font-medium"
-          >
-            נראה שנרגעת 🙂
-          </motion.p>
-        )}
-      </div>
+      {/* Bottom section */}
+      <div className="flex flex-col items-center gap-3">
+        {/* BPM ramp progress */}
+        <div className="flex items-center gap-2 text-xs text-text-secondary">
+          <span>{Math.round(currentBpm)} BPM</span>
+          <div className="w-20 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <div
+              className="h-full rounded-full bg-accent-calm transition-all duration-1000"
+              style={{ width: `${bpmProgress * 100}%` }}
+            />
+          </div>
+          <span>65 BPM</span>
+        </div>
 
-      {/* Bottom: End button */}
-      <Button onClick={handleEnd} variant="secondary" size="md" className="min-w-[120px]" aria-label="סיים הרגעה">
-        סיים
-      </Button>
+        {/* "You're relaxed" message */}
+        <div className="min-h-[40px] flex items-center">
+          {showEndMessage && (
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-accent-success text-base font-medium"
+            >
+              נראה שנרגעת 🙂
+            </motion.p>
+          )}
+        </div>
+
+        {/* End button */}
+        <Button onClick={handleEnd} variant="secondary" size="md" className="min-w-[120px]" aria-label="סיים הרגעה">
+          סיים
+        </Button>
+      </div>
     </div>
   );
 }

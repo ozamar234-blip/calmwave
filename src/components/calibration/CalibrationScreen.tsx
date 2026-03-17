@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useDeviceMotion } from '../../hooks/useDeviceMotion';
 import { useCalibration } from '../../hooks/useCalibration';
 import { useAppStore } from '../../stores/appStore';
 import { ProgressRing } from '../ui/ProgressRing';
+import { TremorWaveform } from '../ui/TremorWaveform';
 import { Button } from '../ui/Button';
 
 export function CalibrationScreen() {
@@ -48,6 +49,11 @@ export function CalibrationScreen() {
     ? 'החזק/י את הטלפון ביד בנוחות'
     : 'מצוין! המשך/י להחזיק';
 
+  const responsiveWidth = useMemo(
+    () => Math.min(300, typeof window !== 'undefined' ? window.innerWidth - 60 : 300),
+    [],
+  );
+
   return (
     <div className="screen items-center justify-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
       {phase === 'permission' && (
@@ -87,11 +93,23 @@ export function CalibrationScreen() {
       )}
 
       {phase === 'calibrating' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center flex flex-col items-center gap-5">
-          <ProgressRing progress={progress} size={200} color="#6366f1">
-            <span className="text-3xl font-bold">{Math.round(progress * 100)}%</span>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center flex flex-col items-center gap-4 w-full max-w-sm">
+          <ProgressRing progress={progress} size={160} color="#6366f1">
+            <span className="text-2xl font-bold">{Math.round(progress * 100)}%</span>
           </ProgressRing>
-          <h2 className="text-xl font-semibold">{hint}</h2>
+          <h2 className="text-lg font-semibold">{hint}</h2>
+
+          {/* Live waveform during calibration */}
+          <div className="w-full flex flex-col items-center gap-1">
+            <p className="text-xs text-text-secondary">קריאת חיישנים בזמן אמת</p>
+            <TremorWaveform
+              samples={samples}
+              intensity={0.2}
+              width={responsiveWidth}
+              height={80}
+            />
+          </div>
+
           <p className="text-text-secondary text-sm">
             {Math.ceil(30 * (1 - progress))} שניות נותרו
           </p>
