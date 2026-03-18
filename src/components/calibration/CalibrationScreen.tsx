@@ -10,7 +10,7 @@ import { Button } from '../ui/Button';
 
 export function CalibrationScreen() {
   const navigate = useNavigate();
-  const { permission, requestPermission, samples, startListening, stopListening, clearBuffer } = useDeviceMotion();
+  const { permission, requestPermission, samples, startListening, stopListening, clearBuffer, liveMagnitude } = useDeviceMotion();
   const { isCalibrating, progress, startCalibration, calibration } = useCalibration();
   const { setCalibrated, setMotionPermission } = useAppStore();
   const [phase, setPhase] = useState<'permission' | 'ready' | 'calibrating' | 'done'>('permission');
@@ -48,6 +48,7 @@ export function CalibrationScreen() {
   const hint = progress < 0.5
     ? 'החזק/י את הטלפון ביד בנוחות'
     : 'מצוין! המשך/י להחזיק';
+  const sensorActive = samples.length > 0;
 
   const responsiveWidth = useMemo(
     () => Math.min(300, typeof window !== 'undefined' ? window.innerWidth - 60 : 300),
@@ -108,6 +109,26 @@ export function CalibrationScreen() {
               width={responsiveWidth}
               height={80}
             />
+          </div>
+
+          {/* Live sensor status */}
+          <div className="flex gap-3 text-xs">
+            <div className="glass px-2 py-1 text-center">
+              <div className="text-[9px] opacity-50">דגימות</div>
+              <div className="font-mono text-accent-calm">{samples.length}</div>
+            </div>
+            <div className="glass px-2 py-1 text-center">
+              <div className="text-[9px] opacity-50">עוצמה</div>
+              <div className="font-mono" style={{
+                color: liveMagnitude > 0.1 ? '#f59e0b' : '#6366f1'
+              }}>{liveMagnitude.toFixed(3)}</div>
+            </div>
+            <div className="glass px-2 py-1 text-center">
+              <div className="text-[9px] opacity-50">סטטוס</div>
+              <div className={sensorActive ? 'text-green-400' : 'text-red-400'}>
+                {sensorActive ? '● פעיל' : '○ ממתין'}
+              </div>
+            </div>
           </div>
 
           <p className="text-text-secondary text-sm">

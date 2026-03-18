@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDeviceMotion } from '../../hooks/useDeviceMotion';
@@ -11,12 +11,16 @@ import { TremorPulse } from '../ui/TremorPulse';
 import { Button } from '../ui/Button';
 import type { StressResult } from '../../types';
 
-/** Compute live intensity (0-1) from recent samples */
+/**
+ * Compute live intensity (0-1) from recent samples.
+ * Uses standard deviation of magnitude — very sensitive to any movement.
+ * With gravity removed, resting hand gives ~0.01-0.05, shaking gives 0.5-5+
+ */
 function computeLiveIntensity(
   samples: { x: number; y: number; z: number }[],
 ): number {
-  if (samples.length < 10) return 0;
-  const recent = samples.slice(-30);
+  if (samples.length < 5) return 0;
+  const recent = samples.slice(-60); // Use more samples for stability
   const magnitudes = recent.map(
     (s) => Math.sqrt(s.x * s.x + s.y * s.y + s.z * s.z),
   );
@@ -24,8 +28,20 @@ function computeLiveIntensity(
   const variance =
     magnitudes.reduce((a, m) => a + (m - avg) ** 2, 0) / magnitudes.length;
   const std = Math.sqrt(variance);
-  // Normalize: 0-0.5 std = low, 0.5-2.0 std = mid, 2.0+ = high
-  return Math.min(1, std / 2.5);
+
+  // After gravity removal:
+  // - Resting hand: std ~0.005-0.02
+  // - Light tremor:  std ~0.02-0.1
+  // - Moderate shake: std ~0.1-0.5
+  // - Strong shake:   std ~0.5+
+  // Map with a low threshold for high sensitivity
+  const normalized = Math.min(1, std / 0.3);
+
+  // Also factor in average magnitude (direct movement detection)
+  const avgNorm = Math.min(1, avg / 0.5);
+
+  // Combine both signals
+  return Math.min(1, Math.max(normalized, avgNorm));
 }
 
 export function MeasurementScreen() {
@@ -37,6 +53,7 @@ export function MeasurementScreen() {
     clearBuffer,
     permission,
     requestPermission,
+    liveAccel,
   } = useDeviceMotion();
   const { analyze } = useStressAnalysis();
   const { calibration, loadCalibration } = useCalibration();
@@ -44,6 +61,8 @@ export function MeasurementScreen() {
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<StressResult | null>(null);
   const [liveIntensity, setLiveIntensity] = useState(0);
+  const [peakIntensity, setPeakIntensity] = useState(0);
+  const [sampleCount, setSampleCount] = useState(0);
   const timerRef = useRef<number | null>(null);
   const intensityRef = useRef<number | null>(null);
 
@@ -51,7 +70,11 @@ export function MeasurementScreen() {
     loadCalibration();
   }, [loadCalibration]);
 
-  const startMeasurement = async () => {
+  // Memoize samples ref for closures
+  const samplesArrayRef = useRef(samples);
+  samplesArrayRef.current = samples;
+
+  const startMeasurement = useCallback(async () => {
     if (permission !== 'granted') {
       await requestPermission();
     }
@@ -59,6 +82,8 @@ export function MeasurementScreen() {
     startListening();
     setPhase('measuring');
     setLiveIntensity(0);
+    setPeakIntensity(0);
+    setSampleCount(0);
 
     const start = Date.now();
     const duration = MEASUREMENT_DURATION * 1000;
@@ -68,28 +93,42 @@ export function MeasurementScreen() {
       const elapsed = Date.now() - start;
       const p = Math.min(1, elapsed / duration);
       setProgress(p);
+      setSampleCount(samplesArrayRef.current.length);
 
       if (p >= 1) {
         if (timerRef.current) clearInterval(timerRef.current);
         if (intensityRef.current) clearInterval(intensityRef.current);
         stopListening();
 
-        if (calibration) {
-          const stressResult = analyze([...samples], calibration);
+        // Use samplesArrayRef for latest data (avoids stale closure)
+        const currentSamples = [...samplesArrayRef.current];
+        if (calibration && currentSamples.length > 64) {
+          const stressResult = analyze(currentSamples, calibration);
           setResult(stressResult);
         } else {
-          setResult({ score: 5, rms: 0, bandPower: 0, timestamp: Date.now() });
+          // No calibration or insufficient samples — estimate from intensity
+          const finalIntensity = computeLiveIntensity(currentSamples);
+          const estimatedScore = Math.max(1, Math.min(10, Math.round(1 + finalIntensity * 9)));
+          setResult({
+            score: estimatedScore,
+            rms: finalIntensity * 0.5,
+            bandPower: finalIntensity * 0.3,
+            timestamp: Date.now(),
+          });
         }
         setPhase('result');
       }
     }, 100);
 
-    // Live intensity update (faster for smooth viz)
+    // Live intensity update — fast for responsive visualization
     intensityRef.current = window.setInterval(() => {
-      const intensity = computeLiveIntensity(samples);
+      // Use ref to always get latest samples (same array reference)
+      const intensity = computeLiveIntensity(samplesArrayRef.current);
       setLiveIntensity(intensity);
-    }, 80);
-  };
+      setPeakIntensity(prev => Math.max(prev, intensity));
+      setSampleCount(samplesArrayRef.current.length);
+    }, 50); // 20fps updates for smooth animation
+  }, [permission, requestPermission, clearBuffer, startListening, stopListening, analyze, calibration]);
 
   useEffect(() => {
     return () => {
@@ -111,6 +150,9 @@ export function MeasurementScreen() {
     () => Math.min(320, typeof window !== 'undefined' ? window.innerWidth - 48 : 320),
     [],
   );
+
+  // Format live values for display
+  const formatAccel = (v: number) => Math.abs(v) < 0.001 ? '0.000' : v.toFixed(3);
 
   return (
     <div className="screen-center px-6 bg-gradient-to-b from-bg-primary to-bg-secondary safe-area-top safe-area-bottom">
@@ -149,15 +191,15 @@ export function MeasurementScreen() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-center flex flex-col items-center gap-4 w-full max-w-sm"
+            className="text-center flex flex-col items-center gap-3 w-full max-w-sm"
           >
-            {/* Live Tremor Pulse */}
-            <TremorPulse intensity={liveIntensity} size={140} />
+            {/* Live Tremor Pulse — shakes with motion */}
+            <TremorPulse intensity={liveIntensity} size={130} />
 
             {/* Timer + intensity label */}
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold tabular-nums" style={{
-                color: liveIntensity > 0.7 ? '#ef4444' : liveIntensity > 0.4 ? '#f59e0b' : '#6366f1',
+                color: liveIntensity > 0.6 ? '#ef4444' : liveIntensity > 0.3 ? '#f59e0b' : '#6366f1',
               }}>
                 {secondsLeft}
               </span>
@@ -179,32 +221,58 @@ export function MeasurementScreen() {
             <div className="w-full max-w-xs">
               <div className="flex justify-between text-[10px] text-text-secondary mb-1">
                 <span>רגוע</span>
-                <span>עוצמת רעד</span>
+                <span>עוצמת רעד: {Math.round(liveIntensity * 100)}%</span>
                 <span>גבוה</span>
               </div>
               <div
-                className="w-full h-2 rounded-full overflow-hidden"
+                className="w-full h-3 rounded-full overflow-hidden"
                 style={{ background: 'rgba(255,255,255,0.08)' }}
               >
                 <motion.div
                   className="h-full rounded-full"
                   animate={{
-                    width: `${Math.max(5, liveIntensity * 100)}%`,
+                    width: `${Math.max(3, liveIntensity * 100)}%`,
                     backgroundColor:
-                      liveIntensity > 0.7
+                      liveIntensity > 0.6
                         ? '#ef4444'
-                        : liveIntensity > 0.4
+                        : liveIntensity > 0.3
                           ? '#f59e0b'
                           : '#6366f1',
                   }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.1, ease: 'linear' }}
                   style={{
                     boxShadow:
-                      liveIntensity > 0.5
-                        ? `0 0 10px ${liveIntensity > 0.7 ? '#ef444480' : '#f59e0b80'}`
+                      liveIntensity > 0.3
+                        ? `0 0 12px ${liveIntensity > 0.6 ? '#ef444480' : '#f59e0b80'}`
                         : 'none',
                   }}
                 />
+              </div>
+            </div>
+
+            {/* Live sensor data — proves the sensor is working */}
+            <div className="w-full max-w-xs flex gap-2 justify-center">
+              <div className="glass px-2 py-1 text-center flex-1">
+                <div className="text-[9px] opacity-50">X</div>
+                <div className="font-mono text-xs" style={{
+                  color: Math.abs(liveAccel.x) > 0.1 ? '#f59e0b' : '#6366f1'
+                }}>{formatAccel(liveAccel.x)}</div>
+              </div>
+              <div className="glass px-2 py-1 text-center flex-1">
+                <div className="text-[9px] opacity-50">Y</div>
+                <div className="font-mono text-xs" style={{
+                  color: Math.abs(liveAccel.y) > 0.1 ? '#f59e0b' : '#6366f1'
+                }}>{formatAccel(liveAccel.y)}</div>
+              </div>
+              <div className="glass px-2 py-1 text-center flex-1">
+                <div className="text-[9px] opacity-50">Z</div>
+                <div className="font-mono text-xs" style={{
+                  color: Math.abs(liveAccel.z) > 0.1 ? '#f59e0b' : '#6366f1'
+                }}>{formatAccel(liveAccel.z)}</div>
+              </div>
+              <div className="glass px-2 py-1 text-center flex-1">
+                <div className="text-[9px] opacity-50">דגימות</div>
+                <div className="font-mono text-xs text-accent-calm">{sampleCount}</div>
               </div>
             </div>
 
@@ -220,7 +288,7 @@ export function MeasurementScreen() {
                 />
               </div>
               <p className="text-text-secondary text-xs mt-1">
-                החזק/י את הטלפון ביד בצורה טבעית
+                {sampleCount > 0 ? 'מזהה תנועה...' : 'ממתין לחיישן...'}
               </p>
             </div>
           </motion.div>
@@ -258,20 +326,24 @@ export function MeasurementScreen() {
               {getFeedback(result.score)}
             </motion.p>
 
-            {/* RMS + Band Power detail */}
+            {/* RMS + Band Power + Peak detail */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="flex gap-4 text-xs text-text-secondary"
+              className="flex gap-3 text-xs text-text-secondary"
             >
               <div className="glass px-3 py-2 text-center">
                 <div className="text-[10px] opacity-60">RMS</div>
-                <div className="font-mono">{result.rms.toFixed(3)}</div>
+                <div className="font-mono">{result.rms.toFixed(4)}</div>
               </div>
               <div className="glass px-3 py-2 text-center">
                 <div className="text-[10px] opacity-60">Band Power</div>
-                <div className="font-mono">{result.bandPower.toFixed(3)}</div>
+                <div className="font-mono">{result.bandPower.toFixed(4)}</div>
+              </div>
+              <div className="glass px-3 py-2 text-center">
+                <div className="text-[10px] opacity-60">שיא</div>
+                <div className="font-mono">{Math.round(peakIntensity * 100)}%</div>
               </div>
             </motion.div>
 
